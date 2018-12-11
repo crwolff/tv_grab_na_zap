@@ -1,4 +1,4 @@
-# zap2epg tv schedule grabber for kodi
+#!/usr/bin/python2
 ################################################################################
 #   This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,45 +14,54 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-import urllib2
+import appdirs
+import argparse
 import base64
-import codecs
-import time
-import datetime
-import _strptime
 import calendar
+import codecs
+import datetime
+import errno
 import gzip
-import os
-import logging
-import re
-import json
-import sys
-from os.path import dirname
-import xml.etree.ElementTree as ET
-from collections import OrderedDict
 import hashlib
+import json
+import logging
+import os
+import re
+import _strptime
+import sys
+import time
+import urllib2
+from collections import OrderedDict
 
+# Utility to create directory
+def mkdir_p(path):
+    try:
+	os.makedirs(path)
+    except OSError as exc:
+	if exc.errno == errno.EEXIST and os.path.isdir(path):
+	    pass
+	else:
+	    raise
 
-def mainRun(userdata):
-    settingsFile = os.path.join(userdata, 'settings.xml')
-    settings = ET.parse(settingsFile)
-    root = settings.getroot()
+# Main scraper
+def mainRun( days, offset, config_file, output ):
+    # Load settings
     settingsDict = {}
-    xdescOrderDict = {}
-    kodiVersion = root.attrib.get('version')
-    logging.info('Kodi settings version is: %s', kodiVersion)
-    for setting in root.findall('setting'):
-        if kodiVersion == '2':
-            settingStr = setting.text
-        else:
-            settingStr = setting.get('value')
-            if settingStr == '':
-                settingStr = None
-        settingID = setting.get('id')
-        settingsDict[settingID] = settingStr
+    stationList = []
+    with open(config_file,'r') as fp:
+	for line in fp:
+	    parts = re.sub( ' *[#;].*\n','', line ).strip().split('=',1)
+	    parts = map( str.strip, parts )
+	    if (( parts[0] == '' ) or ( len(parts) != 2 )):
+		pass
+	    elif ( parts[0] == 'channel' ):
+		stationList.append( re.sub( '.zap2epg', '', parts[1] ))
+	    else:
+		settingsDict[parts[0]] = parts[1]
+	#print settingsDict
     for setting in settingsDict:
-        if setting == 'slist':
-            stationList = settingsDict[setting]
+        if setting == 'country':
+            country = settingsDict[setting]
         if setting == 'zipcode':
             zipcode = settingsDict[setting]
         if setting == 'lineup':
@@ -61,69 +70,25 @@ def mainRun(userdata):
             lineupcode = settingsDict[setting]
         if setting == 'device':
             device = settingsDict[setting]
-        if setting == 'days':
-            days = settingsDict[setting]
         if setting == 'xdetails':
             xdetails = settingsDict[setting]
         if setting == 'xdesc':
-            xdesc = settingsDict[setting]
+            tmp = settingsDict[setting]
+	    xdesc = tmp[0]
+	    xdescOrder = tmp.split(',')[1:]
         if setting == 'epicon':
             epicon = settingsDict[setting]
         if setting == 'epgenre':
             epgenre = settingsDict[setting]
-        if setting == 'tvhoff':
-            tvhoff = settingsDict[setting]
-        if setting == 'tvhurl':
-            tvhurl = settingsDict[setting]
-        if setting == 'tvhport':
-            tvhport = settingsDict[setting]
-        if setting == 'usern':
-            usern = settingsDict[setting]
-        if setting == 'passw':
-            passw = settingsDict[setting]
         if setting == 'chmatch':
             chmatch = settingsDict[setting]
-        if setting == 'tvhmatch':
-            tvhmatch = settingsDict[setting]
-        if setting.startswith('desc'):
-            xdescOrderDict[setting] = (settingsDict[setting])
-    xdescOrder = [value for (key, value) in sorted(xdescOrderDict.items())]
     if lineupcode != 'lineupId':
         chmatch = 'false'
-        tvhmatch = 'false'
-    if zipcode.isdigit():
-        country = 'USA'
-    else:
-        country = 'CAN'
-    logging.info('Running zap2epg-0.7.4 for zipcode: %s and lineup: %s', zipcode, lineup)
+    logging.info('Running tv_grab_na_zap --offset %d --days %d for zipcode: %s and lineup: %s', offset, days, zipcode, lineup)
     pythonStartTime = time.time()
-    cacheDir = os.path.join(userdata, 'cache')
-    dayHours = int(days) * 8 # set back to 8 when done testing
-    gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
+    dayHours = int(days) * 8 # each grid chunk is 3 hours, 8 in a day
+    gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.combine(datetime.datetime.now(), datetime.time.min) + datetime.timedelta(days=int(offset))), '%Y-%m-%d %H:%M:%S'))))
     schedule = {}
-    tvhMatchDict = {}
-
-    def tvhMatchGet():
-        tvhUrlBase = 'http://' + tvhurl + ":" + tvhport
-        channels_url = tvhUrlBase + '/api/channel/grid?all=1&limit=999999999&sort=name&filter=[{"type":"boolean","value":true,"field":"enabled"}]'
-        if usern is not None and passw is not None:
-            logging.info('Adding Tvheadend username and password to request url...')
-            request = urllib2.Request(channels_url)
-            request.add_header('Authorization', b'Basic ' + base64.b64encode(usern + b':' + passw))
-            response = urllib2.urlopen(request)
-        else:
-            response = urllib2.urlopen(channels_url)
-        try:
-            logging.info('Accessing Tvheadend channel list from: %s', tvhUrlBase)
-            channels = json.load(response)
-            for ch in channels['entries']:
-                channelName = ch['name']
-                channelNum = ch['number']
-                tvhMatchDict[channelNum] = channelName
-            logging.info('%s Tvheadend channels found...', str(len(tvhMatchDict)))
-        except urllib2.HTTPError as e:
-            logging.exception('Exception: tvhMatch - %s', e.strerror)
-            pass
 
     def deleteOldCache(gridtimeStart, showList):
         logging.info('Checking for old cache files...')
@@ -361,10 +326,9 @@ def mainRun(userdata):
         except Exception as e:
             logging.exception('Exception: printEpisodes')
 
-    def xmltv():
+    def xmltv( outFile ):
         try:
             enc = 'utf-8'
-            outFile = os.path.join(userdata, 'xmltv.xml')
             fh = codecs.open(outFile, 'w+b', encoding=enc)
             printHeader(fh, enc)
             printStations(fh)
@@ -395,11 +359,6 @@ def mainRun(userdata):
                         else:
                             chnumUpdate = chnumStart
                         schedule[skey]['chnum'] = chnumUpdate
-                        if tvhmatch == 'true' and '.' in chnumUpdate:
-                            if chnumUpdate in tvhMatchDict:
-                                schedule[skey]['chtvh'] = tvhMatchDict[chnumUpdate]
-                            else:
-                                schedule[skey]['chtvh'] = None
                 else:
                     schedule[skey] = {}
                     chName = station.get('callSign')
@@ -415,11 +374,6 @@ def mainRun(userdata):
                     else:
                         chnumUpdate = chnumStart
                     schedule[skey]['chnum'] = chnumUpdate
-                    if tvhmatch == 'true' and '.' in chnumUpdate:
-                        if chnumUpdate in tvhMatchDict:
-                            schedule[skey]['chtvh'] = tvhMatchDict[chnumUpdate]
-                        else:
-                            schedule[skey]['chtvh'] = None
         except Exception as e:
             logging.exception('Exception: parseStations')
 
@@ -737,8 +691,6 @@ def mainRun(userdata):
         gridtime = gridtimeStart
         if stationList is None:
             logging.info('No channel list found - adding all stations!')
-        if tvhoff == 'true' and tvhmatch == 'true':
-            tvhMatchGet()
         while count < dayHours:
             filename = str(gridtime) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
@@ -775,7 +727,7 @@ def mainRun(userdata):
             showList = parseXdetails()
         else:
             showList = []
-        xmltv()
+        xmltv( output )
         deleteOldCache(gridtimeStart, showList)
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
@@ -784,8 +736,195 @@ def mainRun(userdata):
     except Exception as e:
         logging.exception('Exception: main')
 
+# Manual configuration
+def configure(filename):
+    # Pick country
+    country = raw_input('Country (USA/CAN): ').strip()
+    country = country.upper()
+    if (( country != 'USA' ) and ( country != 'CAN' )):
+	print 'Invalid country, must be USA or CAN ({})'.format(country)
+	return
+
+    # Pick zipcode
+    zipcode = raw_input('Zipcode: ').strip()
+    if ( country == 'USA' ) and ( zipcode.isdigit() == False ):
+	print 'USA zipcode must be numeric'
+	return
+    elif ( country == 'CAN' ):
+	zipcode = re.sub(' ', '', zipcode.upper())
+
+    # Download lineu
+    url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/' + country + '/' + zipcode + '/gapzap'
+    if ( country == 'USA' ):
+	lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
+	lineupsC = ['NONE', 'DFLTE', 'DFLTC', 'DFLTM', 'DFLTP', 'DFLTA', 'DFLTH']
+	deviceX = ['-', '-', '-', '-', '-', '-', '-']
+    else:
+	lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
+	lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
+	deviceX = ['-', '-', '-', '-', '-']
+    content = urllib2.urlopen(url).read()
+    lineupDict = json.loads(content)
+    #print lineupDict
+
+    # Parse providers
+    if 'Providers' in lineupDict:
+	for provider in lineupDict['Providers']:
+	    lineupName = provider.get('name')
+	    lineupLocation = provider.get('location')
+	    if lineupLocation != '':
+		lineupCombo = lineupName + '  (' + lineupLocation + ')'
+		lineupsN.append(lineupCombo)
+	    else:
+		lineupsN.append(lineupName)
+	    lineupsC.append(provider.get('headendId'))
+	    deviceGet = provider.get('device')
+	    if deviceGet == '' or deviceGet == ' ':
+		deviceGet = '-'
+	    deviceX.append(deviceGet)
+    else:
+	print 'Error - No Providers!', 'No providers were found - please check zipcode and try again.'
+	return
+
+    # Choose lineup
+    print '  ' + lineupsN[0]
+    for i in range(1,len(lineupsN)):
+	print i, lineupsN[i]
+    lineupSel = raw_input('Select one: ').strip()
+    if ( lineupSel.isdigit() ):
+	lineupSel = int(lineupSel)
+    else:
+	print 'No lineup selected'
+	return
+    lineupcode = lineupsC[lineupSel]
+    lineupname = lineupsN[lineupSel]
+    device = deviceX[lineupSel]
+
+    # Create channel list
+    gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
+    url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+    content = urllib2.urlopen(url).read()
+    contentDict = json.loads(content)
+    stationDict = {}
+    if 'channels' in contentDict:
+	for channel in contentDict['channels']:
+	    skey = channel.get('channelId')
+	    stationDict[skey] = {}
+	    stationDict[skey]['name'] = channel.get('callSign')
+	    stationDict[skey]['num'] = channel.get('channelNo')
+	    stationDict[skey]['include'] = 'False'
+    stationDictSort = OrderedDict(sorted(stationDict.iteritems(), key=lambda i: (float(i[1]['num']))))
+
+    # Select channels
+    print 'Select stations: '
+    ans = ''
+    for station in stationDictSort:
+	if ( ans == 'all' ):
+	    stationDictSort[station]['include'] = 'True'
+	elif ( ans == 'none' ):
+	    stationDictSort[station]['include'] = 'False'
+	else:
+	    ans = raw_input( stationDictSort[station]['name'] + ' (' + stationDictSort[station]['num'] + ')  [yes,no,all,none (default=no)]: ' ).strip()
+	    ans = ans.lower()
+	    if (( ans == 'yes' ) or ( ans[0] == 'y' ) or ( ans == 'all' )):
+		stationDictSort[station]['include'] = 'True'
+	    else:
+		stationDictSort[station]['include'] = 'False'
+
+    # Flush old cache
+    if os.path.exists(cacheDir):
+	entries = os.listdir(cacheDir)
+	for entry in entries:
+	    oldfile = entry.split('.')[0]
+	    if oldfile.isdigit():
+		fn = os.path.join(cacheDir, entry)
+		try:
+		    os.remove(fn)
+		except:
+		    pass
+
+    # Write the config file
+    with open(filename,'w') as f:
+	f.write('country={}\n'.format(country))
+	f.write('zipcode={}\n'.format(zipcode))
+	f.write('lineupcode={}\n'.format(lineupcode))
+	f.write('lineup={}\n'.format(lineupname))
+	f.write('device={}\n'.format(device))
+	# Need configuration prompts
+	f.write('chmatch=true\n')
+	f.write('epgenre=2\n')
+	f.write('epicon=1\n')
+	f.write('xdetails=true\n')
+	f.write('xdesc=true,10,13,6,18,6,15,2,9,2,14,6,11,6,12,6,20,6,19,0,0\n')
+	# Dump channel list
+	for station in stationDictSort:
+	    if ( stationDictSort[station]['include'] == 'True' ):
+		f.write('channel={}.zap2epg\n'.format(station))
+	    else:
+		f.write('channel!{}.zap2epg\n'.format(station))
+
+# Main routine
+def tv_grab_na_zap():
+    # Setup command line arguments
+    ap = argparse.ArgumentParser()
+
+    # All (help handled by ArgumentParser)
+    ap.add_argument("--version", help="display grabber version", action="store_true")
+    ap.add_argument("--capabilities", help="list grabber capabilities", action="store_true")
+    ap.add_argument("--description", help="prints a description that identifies the grabber", action="store_true")
+
+    # Baseline
+    ap.add_argument("--days", help="number of days of listings", type=int, default=7)
+    ap.add_argument("--offset", help="number of days to skip before listings start", type=int, default=0)
+    ap.add_argument("--quiet", help="turns off all informational messages", action="store_true")
+    ap.add_argument("--output", help="output file for XML tv listings", default=os.path.join(userdata, 'xmltv.xml'))
+    ap.add_argument("--debug", help="turns on debug messages", action="store_true")
+    ap.add_argument("--config-file", help="configuration file", default=os.path.join(userdata, 'tv_grab_na_zap.conf'))
+
+    # Manual Config
+    ap.add_argument("--configure", help="manual configuration", action="store_true")
+
+    # Parse command line
+    args = ap.parse_args()
+
+    # Boilerplate
+    if ( args.version ):
+	print "tv_grab_na_zap v0.1"
+	exit(0)
+    if ( args.capabilities ):
+	print "baseline"
+	print "manualconfig"
+	exit(0)
+    if ( args.description ):
+	print "NA Zap2it (www.zap2it.com)"
+	exit(0)
+
+    # Global
+    if ( args.quiet == True ):
+	verbose = False
+
+    # (Re)configuration
+    if ( args.configure ):
+	configure(args.config_file)
+	exit(0)
+
+    # Schedule fetcher
+    mainRun( args.days, args.offset, args.config_file, args.output )
+    exit(0)
+
+# If run from command line
 if __name__ == '__main__':
-    userdata = os.getcwd()
+    # Init
+    verbose = True
+
+    # Setup directorys
+    userdata = appdirs.user_data_dir('tv_grab_na_zap', 'crwolff')
+    mkdir_p(userdata)
+    cacheDir = os.path.join(userdata, 'cache')
+
+    # Enable logging
     log = os.path.join(userdata, 'zap2epg.log')
     logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
-    mainRun(userdata)
+
+    # Parse command line
+    tv_grab_na_zap()
