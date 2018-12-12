@@ -45,50 +45,6 @@ def mkdir_p(path):
 
 # Main scraper
 def mainRun( days, offset, config_file, output ):
-    # Load settings
-    settingsDict = {}
-    stationList = []
-    with open(config_file,'r') as fp:
-	for line in fp:
-	    parts = re.sub( ' *[#;].*\n','', line ).strip().split('=',1)
-	    parts = map( str.strip, parts )
-	    if (( parts[0] == '' ) or ( len(parts) != 2 )):
-		pass
-	    elif ( parts[0] == 'channel' ):
-		stationList.append( re.sub( '.zap2epg', '', parts[1] ))
-	    else:
-		settingsDict[parts[0]] = parts[1]
-	#print settingsDict
-    for setting in settingsDict:
-        if setting == 'country':
-            country = settingsDict[setting]
-        if setting == 'zipcode':
-            zipcode = settingsDict[setting]
-        if setting == 'lineup':
-            lineup = settingsDict[setting]
-        if setting == 'lineupcode':
-            lineupcode = settingsDict[setting]
-        if setting == 'device':
-            device = settingsDict[setting]
-        if setting == 'xdetails':
-            xdetails = settingsDict[setting]
-        if setting == 'xdesc':
-            tmp = settingsDict[setting]
-	    xdesc = tmp[0]
-	    xdescOrder = tmp.split(',')[1:]
-        if setting == 'epicon':
-            epicon = settingsDict[setting]
-        if setting == 'epgenre':
-            epgenre = settingsDict[setting]
-        if setting == 'chmatch':
-            chmatch = settingsDict[setting]
-    if lineupcode != 'lineupId':
-        chmatch = 'false'
-    logging.info('Running tv_grab_na_zap --offset %d --days %d for zipcode: %s and lineup: %s', offset, days, zipcode, lineup)
-    pythonStartTime = time.time()
-    dayHours = int(days) * 8 # each grid chunk is 3 hours, 8 in a day
-    gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.combine(datetime.datetime.now(), datetime.time.min) + datetime.timedelta(days=int(offset))), '%Y-%m-%d %H:%M:%S'))))
-    schedule = {}
 
     def deleteOldCache(gridtimeStart, showList):
         logging.info('Checking for old cache files...')
@@ -683,6 +639,50 @@ def mainRun( days, offset, config_file, output ):
         except Exception as e:
             logging.exception('Exception: addXdetails to description')
 
+    # Load settings
+    settingsDict = {}
+    stationList = []
+    with open(config_file,'r') as fp:
+	for line in fp:
+	    parts = re.sub( ' *[#;].*\n','', line ).strip().split('=',1)
+	    parts = map( str.strip, parts )
+	    if (( parts[0] == '' ) or ( len(parts) != 2 )):
+		pass
+	    elif ( parts[0] == 'channel' ):
+		stationList.append( re.sub( '.zap2epg', '', parts[1] ))
+	    else:
+		settingsDict[parts[0]] = parts[1]
+	#print settingsDict
+    for setting in settingsDict:
+        if setting == 'country':
+            country = settingsDict[setting]
+        if setting == 'zipcode':
+            zipcode = settingsDict[setting]
+        if setting == 'lineup':
+            lineup = settingsDict[setting]
+        if setting == 'lineupcode':
+            lineupcode = settingsDict[setting]
+        if setting == 'device':
+            device = settingsDict[setting]
+        if setting == 'xdetails':
+            xdetails = settingsDict[setting]
+        if setting == 'xdesc':
+            tmp = settingsDict[setting]
+	    xdesc = tmp[0]
+	    xdescOrder = tmp.split(',')[1:]
+        if setting == 'epicon':
+            epicon = settingsDict[setting]
+        if setting == 'epgenre':
+            epgenre = settingsDict[setting]
+        if setting == 'chmatch':
+            chmatch = settingsDict[setting]
+    if lineupcode != 'lineupId':
+        chmatch = 'false'
+    logging.info('Running tv_grab_na_zap --offset %d --days %d for zipcode: %s and lineup: %s', offset, days, zipcode, lineup)
+    pythonStartTime = time.time()
+    dayHours = int(days) * 8 # each grid chunk is 3 hours, 8 in a day
+    gridtimeStart = (int(time.mktime(time.strptime(str(datetime.datetime.combine(datetime.datetime.now(), datetime.time.min) + datetime.timedelta(days=int(offset))), '%Y-%m-%d %H:%M:%S'))))
+    schedule = {}
 
     try:
         if not os.path.exists(cacheDir):
