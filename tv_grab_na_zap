@@ -739,7 +739,7 @@ def mainRun( days, offset, config_file, output ):
 # Manual configuration
 def configure(filename):
     # Pick country
-    print 'Country (USA/CAN): ',
+    sys.stdout.write( 'Country (USA/CAN): ' )
     sys.stdout.flush()
     country = sys.stdin.readline().strip()
     country = country.upper()
@@ -748,7 +748,7 @@ def configure(filename):
 	return
 
     # Pick zipcode
-    print 'Zipcode: ',
+    sys.stdout.write( 'Zipcode: ' )
     sys.stdout.flush()
     zipcode = sys.stdin.readline().strip()
     if ( country == 'USA' ) and ( zipcode.isdigit() == False ):
@@ -794,7 +794,7 @@ def configure(filename):
     print '  ' + lineupsN[0]
     for i in range(1,len(lineupsN)):
 	print i, lineupsN[i]
-    print 'Select one: ',
+    sys.stdout.write( 'Select one: ' )
     sys.stdout.flush()
     lineupSel = sys.stdin.readline().strip()
     if ( lineupSel.isdigit() ):
@@ -830,7 +830,7 @@ def configure(filename):
 	elif ( ans == 'none' ):
 	    stationDictSort[station]['include'] = 'False'
 	else:
-	    print stationDictSort[station]['name'] + ' (' + stationDictSort[station]['num'] + ')  [yes,no,all,none (default=no)]: ',
+	    sys.stdout.write( stationDictSort[station]['name'] + ' (' + stationDictSort[station]['num'] + ')  [yes,no,all,none (default=no)]: ' )
 	    sys.stdout.flush()
 	    ans = sys.stdin.readline().strip()
 	    ans = ans.lower()
