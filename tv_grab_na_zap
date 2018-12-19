@@ -25,6 +25,7 @@ import gzip
 import hashlib
 import json
 import logging
+import logging.handlers
 import os
 import re
 import _strptime
@@ -934,7 +935,12 @@ if __name__ == '__main__':
 
     # Enable logging
     log = os.path.join(userdata, 'zap2epg.log')
-    logging.basicConfig(filename=log, filemode='w', format='%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.DEBUG)
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    handler = logging.handlers.RotatingFileHandler( log, maxBytes=10*1024*1024, backupCount=5)
+    fmt = logging.Formatter( '%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S' )
+    handler.setFormatter( fmt )
+    logger.addHandler(handler)
 
     # Parse command line
     tv_grab_na_zap()
