@@ -46,7 +46,7 @@ def mkdir_p(path):
 # Main scraper
 def mainRun( days, offset, config_file, output ):
 
-    def deleteOldCache(gridtimeStart, showList):
+    def deleteOldCache(oldestTime, showList):
         logging.info('Checking for old cache files...')
         try:
             if os.path.exists(cacheDir):
@@ -55,7 +55,7 @@ def mainRun( days, offset, config_file, output ):
                     oldfile = entry.split('.')[0]
                     if oldfile.isdigit():
                         fn = os.path.join(cacheDir, entry)
-                        if (int(oldfile) + 10800) < gridtimeStart:
+                        if (int(oldfile) <= oldestTime):
                             try:
                                 os.remove(fn)
                                 logging.info('Deleting old cache: %s', entry)
@@ -728,7 +728,9 @@ def mainRun( days, offset, config_file, output ):
         else:
             showList = []
         xmltv( output )
-        deleteOldCache(gridtimeStart, showList)
+	# Delete cache data prior to 3 days ago
+	oldestTime = (int(time.mktime(time.strptime(str(datetime.datetime.combine(datetime.datetime.now(), datetime.time.min) + datetime.timedelta(days=int(-3))), '%Y-%m-%d %H:%M:%S'))))
+        deleteOldCache(oldestTime, showList)
         timeRun = round((time.time() - pythonStartTime),2)
         logging.info('zap2epg completed in %s seconds. ', timeRun)
         logging.info('%s Stations and %s Episodes written to xmltv.xml file.', str(stationCount), str(episodeCount))
