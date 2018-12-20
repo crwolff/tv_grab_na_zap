@@ -920,6 +920,9 @@ def tv_grab_na_zap():
 	exit(0)
 
     # Schedule fetcher
+    if ( args.offset > 14 ):
+	sys.stderr.write("No data available\n")
+	exit(1)
     mainRun( args.days, args.offset, args.config_file, args.output )
     exit(0)
 
