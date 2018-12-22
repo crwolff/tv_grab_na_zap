@@ -64,7 +64,7 @@ def mainRun( days, offset, config_file, output ):
                                 logging.warn('Error Deleting: %s - %s.' % (e.filename, e.strerror))
                     elif not oldfile.isdigit():
                         fn = os.path.join(cacheDir, entry)
-                        if oldfile not in showList:
+                        if os.path.getmtime( fn ) < oldestTime:
                             try:
                                 os.remove(fn)
                                 logging.info('Deleting old cache: %s', entry)
@@ -450,6 +450,7 @@ def mainRun( days, offset, config_file, output ):
                             if os.path.exists(fileDir):
                                 fileSize = os.path.getsize(fileDir)
                                 if fileSize > 0:
+				    os.utime(fileDir, None)
                                     with open(fileDir, 'rb') as f:
                                         EPdetails = json.loads(f.read())
                                         f.close()
@@ -465,7 +466,7 @@ def mainRun( days, offset, config_file, output ):
                                     EPlist = EPdetails['upcomingEpisodeTab']
                                     EPid = edict['epid']
                                     for airing in EPlist:
-                                        if EPid.lower() == airing['tmsID'].lower():
+                                        if airing.get('tmsID') and EPid.lower() == airing['tmsID'].lower():
                                             if not episode.startswith("MV"):
                                                 try:
                                                     origDate = airing.get('originalAirDate')
@@ -704,6 +705,8 @@ def mainRun( days, offset, config_file, output ):
                 except:
                     logging.warn('Could not download guide data for: %s', str(gridtime))
                     logging.warn('URL: %s', url)
+		    sys.stderr.write("No data available\n")
+		    exit(1)
             if os.path.exists(fileDir):
                 try:
                     with gzip.open(fileDir, 'rb') as f:
