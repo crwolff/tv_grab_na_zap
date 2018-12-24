@@ -716,7 +716,7 @@ def mainRun( days, offset, config_file, output ):
         while count < dayHours:
             filename = str(gridtime) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
-            if not os.path.exists(fileDir):
+            if ((offset <= 0) and (count < 8)) or (not os.path.exists(fileDir)):
                 try:
                     logging.info('Downloading guide data for: %s', str(gridtime))
                     url = 'http://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
