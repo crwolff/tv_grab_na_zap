@@ -886,7 +886,7 @@ def configure(filename):
 	f.write('device={}\n'.format(device))
 	# Need configuration prompts
 	f.write('chmatch=true\n')
-	f.write('epgenre=2\n')
+	f.write('epgenre=3\n')
 	f.write('epicon=1\n')
 	f.write('xdetails=true\n')
 	f.write('xdesc=true,10,13,6,18,6,15,2,9,2,14,6,11,6,12,6,20,6,19,0,0\n')
