@@ -27,6 +27,7 @@ import logging
 import logging.handlers
 import os
 import re
+from shutil import copyfile
 import _strptime
 import sys
 import time
@@ -942,11 +943,18 @@ def tv_grab_na_zap():
 	configure(args.config_file)
 	exit(0)
 
-    # Schedule fetcher
+    # Limit to two weeks
     if ( args.offset > 14 ):
 	sys.stderr.write("No data available\n")
 	exit(1)
+
+    # Call main routine
     mainRun( args.days, args.offset, args.config_file, args.output )
+
+    # Copy file for debug
+    #dbgfile = os.path.join( userdata, 'xmltv_' + str(args.offset) + '_' + str(args.days) + ".xml" )
+    #copyfile( args.output, dbgfile )
+
     exit(0)
 
 # If run from command line
@@ -963,7 +971,7 @@ if __name__ == '__main__':
     log = os.path.join(userdata, 'zap2epg.log')
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    handler = logging.handlers.RotatingFileHandler( log, maxBytes=10*1024*1024, backupCount=5)
+    handler = logging.handlers.RotatingFileHandler( log, maxBytes=1*1024*1024, backupCount=5)
     fmt = logging.Formatter( '%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S' )
     handler.setFormatter( fmt )
     logger.addHandler(handler)
