@@ -952,7 +952,8 @@ def tv_grab_na_zap():
     mainRun( args.days, args.offset, args.config_file, args.output )
 
     # Copy file for debug
-    #dbgfile = os.path.join( userdata, 'xmltv_' + str(args.offset) + '_' + str(args.days) + ".xml" )
+    #cfgname = os.path.splitext(os.path.basename( args.config_file ))[0]
+    #dbgfile = os.path.join( userdata, cfgname + '_' + str(args.offset) + '_' + str(args.days) + ".xml" )
     #copyfile( args.output, dbgfile )
 
     exit(0)
@@ -971,7 +972,7 @@ if __name__ == '__main__':
     log = os.path.join(userdata, 'zap2epg.log')
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    handler = logging.handlers.RotatingFileHandler( log, maxBytes=1*1024*1024, backupCount=5)
+    handler = logging.handlers.RotatingFileHandler( log, maxBytes=5*1024*1024, backupCount=5)
     fmt = logging.Formatter( '%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S' )
     handler.setFormatter( fmt )
     logger.addHandler(handler)
