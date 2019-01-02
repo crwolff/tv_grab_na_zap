@@ -212,8 +212,6 @@ def mainRun( days, offset, config_file, output ):
         episodeCount = 0
         try:
             logging.info('Writing Episodes to xmltv.xml file...')
-            if xdesc is True:
-                logging.info('Appending Xdetails to description for xmltv.xml file...')
             for station in schedule:
                 lang = 'en'
                 sdict = schedule[station]
@@ -234,12 +232,8 @@ def mainRun( days, offset, config_file, output ):
                                     encwrite(fh, enc,'\t\t<title lang=\"' + lang + '\">TBA</title>\n')
                                 if edict['eptitle'] is not None:
                                     encwrite(fh, enc,'\t\t<sub-title lang=\"'+ lang + '\">' + re.sub('&','&amp;', edict['eptitle']) + '</sub-title>\n')
-                                if xdesc == 'true':
-                                    xdescSort = addXDetails(edict)
-                                    encwrite(fh, enc,'\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', xdescSort) + '</desc>\n')
-                                if xdesc == 'false':
-                                    if edict['epdesc'] is not None:
-                                        encwrite(fh, enc,'\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', edict['epdesc']) + '</desc>\n')
+                                if edict['epdesc'] is not None:
+                                    encwrite(fh, enc,'\t\t<desc lang=\"' + lang + '\">' + re.sub('&','&amp;', edict['epdesc']) + '</desc>\n')
                                 # <credits />
                                 if edict['epyear'] is not None:
                                     encwrite(fh, enc,'\t\t<date>' + edict['epyear'] + '</date>\n')
@@ -386,7 +380,6 @@ def mainRun( days, offset, config_file, output ):
                             schedule[skey][epkey]['epfilter'] = episode.get('filter')
                             schedule[skey][epkey]['epgenres'] = None
                             schedule[skey][epkey]['epcredits'] = None
-                            schedule[skey][epkey]['epxdesc'] = None
                             schedule[skey][epkey]['epseries'] = episode.get('seriesId')
                             schedule[skey][epkey]['epimage'] = None
                             schedule[skey][epkey]['epfan'] = None
@@ -419,7 +412,6 @@ def mainRun( days, offset, config_file, output ):
                         schedule[skey][epkey]['epfilter'] = episode.get('filter')
                         schedule[skey][epkey]['epgenres'] = None
                         schedule[skey][epkey]['epcredits'] = None
-                        schedule[skey][epkey]['epxdesc'] = None
                         schedule[skey][epkey]['epseries'] = episode.get('seriesId')
                         schedule[skey][epkey]['epimage'] = None
                         schedule[skey][epkey]['epfan'] = None
@@ -521,147 +513,6 @@ def mainRun( days, offset, config_file, output ):
             logging.exception('Exception: parseXdetails')
         return showList
 
-    def addXDetails(edict):
-        try:
-            ratings = ""
-            date = ""
-            myear = ""
-            new = ""
-            live = ""
-            hd = ""
-            cc = ""
-            cast = ""
-            season = ""
-            epis = ""
-            episqts = ""
-            prog = ""
-            plot= ""
-            descsort = ""
-            bullet = u"\u2022 "
-            hyphen = u"\u2013 "
-            newLine = "\n"
-            space = " "
-            colon = u"\u003A "
-            vbar = u"\u007C "
-            slash = u"\u2215 "
-            comma = u"\u002C "
-
-            def getSortName(opt):
-                return {
-                    1: bullet,
-                    2: newLine,
-                    3: hyphen,
-                    4: space,
-                    5: colon,
-                    6: vbar,
-                    7: slash,
-                    8: comma,
-                    9: plot,
-                    10: new,
-                    11: hd,
-                    12: cc,
-                    13: season,
-                    14: ratings,
-                    15: date,
-                    16: prog,
-                    17: epis,
-                    18: episqts,
-                    19: cast,
-                    20: myear,
-                }.get(opt, None)
-
-            def cleanSortList(optList):
-                cleanList=[]
-                optLen = len(optList)
-                for opt in optList:
-                    thisOption = getSortName(int(opt))
-                    if thisOption:
-                        cleanList.append(int(opt))
-                for item in reversed(cleanList):
-                    if cleanList[-1] <= 8:
-                        del cleanList[-1]
-                return cleanList
-
-            def makeDescsortList(optList):
-                sortOrderList =[]
-                lastOption = 1
-                cleanedList = cleanSortList(optList)
-                for opt in cleanedList:
-                    thisOption = getSortName(int(opt))
-                    if int(opt) <= 8 and lastOption <= 8:
-                        if int(opt) == 2 and len(sortOrderList) > 1:
-                            del sortOrderList[-1]
-                            sortOrderList.append(thisOption)
-                        lastOption = int(opt)
-                    elif thisOption and lastOption:
-                        sortOrderList.append(thisOption)
-                        lastOption = int(opt)
-                    elif thisOption:
-                        lastOption = int(opt)
-                return sortOrderList
-
-            if edict['epoad'] is not None and int(edict['epoad']) > 0:
-                is_dst = time.daylight and time.localtime().tm_isdst > 0
-                TZoffset = (time.altzone if is_dst else time.timezone)
-                origDate = int(edict['epoad']) + TZoffset
-                finalDate = datetime.datetime.fromtimestamp(origDate).strftime('%B %d%% %Y')
-                finalDate = re.sub('%', ',', finalDate)
-                date = "First aired: " + finalDate + space
-            if edict['epyear'] is not None:
-                myear = "Released: " + edict['epyear'] + space
-            if edict['eprating'] is not None:
-                ratings = edict['eprating'] + space
-            if edict['epflag'] != []:
-                flagList = edict['epflag']
-                new = ' - '.join(flagList).upper() + space
-            #if edict['epnew'] is not None:
-                #new = edict['epnew'] + space
-            #if edict['eplive'] is not None:
-                #new = edict['eplive'] + space
-            #if edict['epprem'] is not None:
-                #new = edict['epprem'] + space
-            #if edict['epfin'] is not None:
-                #new = edict['epfin'] + space
-            if edict['eptags'] != []:
-                tagsList = edict['eptags']
-                cc = ' | '.join(tagsList).upper() + space
-            #if edict['ephd'] is not None:
-                #hd = edict['ephd'] + space
-            if edict['epsn'] is not None and edict['epen'] is not None:
-                s = re.sub('S', '', edict['epsn'])
-                sf = "Season " + str(int(s))
-                e = re.sub('E', '', edict['epen'])
-                ef = "Episode " + str(int(e))
-                season = sf + " - " + ef + space
-            if edict['epcredits'] is not None:
-                cast = "Cast: "
-                castlist = ""
-                prev = None
-                EPcastList = []
-                for c in edict['epcredits']:
-                    EPcastList.append(c['name'])
-                for g in EPcastList:
-                    if prev is None:
-                        castlist = g
-                        prev = g
-                    else:
-                        castlist = castlist + ", " + g
-                cast = cast + castlist + space
-            if edict['epshow'] is not None:
-                prog = edict['epshow'] + space
-            if edict['eptitle'] is not None:
-                epis = edict['eptitle'] + space
-                episqts = '\"' + edict['eptitle'] + '\"' + space
-            if edict['epdesc'] is not None:
-                plot = edict['epdesc'] + space
-
-        # todo - handle star ratings
-
-            descsort = "".join(makeDescsortList(xdescOrder))
-            return descsort
-        except Exception as e:
-            logging.exception('Exception: addXdetails to description')
-
     # Load settings
     settingsDict = {}
     stationList = []
@@ -689,10 +540,6 @@ def mainRun( days, offset, config_file, output ):
             device = settingsDict[setting]
         if setting == 'xdetails':
             xdetails = settingsDict[setting]
-        if setting == 'xdesc':
-            tmp = settingsDict[setting]
-	    xdesc = tmp[0]
-	    xdescOrder = tmp.split(',')[1:]
         if setting == 'epicon':
             epicon = settingsDict[setting]
         if setting == 'epgenre':
@@ -890,7 +737,6 @@ def configure(filename):
 	f.write('epgenre=3\n')
 	f.write('epicon=1\n')
 	f.write('xdetails=true\n')
-	f.write('xdesc=false,10,13,6,18,6,15,2,9,2,14,6,11,6,12,6,20,6,19,0,0\n')
 	# Dump channel list
 	for station in stationDictSort:
 	    if ( stationDictSort[station]['include'] == 'True' ):
