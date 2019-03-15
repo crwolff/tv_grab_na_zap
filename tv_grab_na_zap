@@ -74,7 +74,9 @@ def mainRun( days, offset, config_file, output ):
             logging.exception('Exception: deleteOldCache - %s', e.strerror)
 
     def convTime(t):
-        return time.strftime("%Y%m%d%H%M%S",time.localtime(int(t)))
+        is_dst = time.daylight and time.localtime(int(t)).tm_isdst > 0
+        TZoffset = " %.2d%.2d" %(- (time.altzone if is_dst else time.timezone)/3600, 0)
+        return time.strftime("%Y%m%d%H%M%S",time.localtime(int(t))) + TZoffset
 
     def savepage(fn, data):
         if not os.path.exists(cacheDir):
@@ -221,10 +223,8 @@ def mainRun( days, offset, config_file, output ):
                             edict = sdict[episode]
                             if 'epstart' in edict:
                                 startTime = convTime(edict['epstart'])
-                                is_dst = time.daylight and time.localtime().tm_isdst > 0
-                                TZoffset = "%.2d%.2d" %(- (time.altzone if is_dst else time.timezone)/3600, 0)
                                 stopTime = convTime(edict['epend'])
-                                encwrite(fh, enc,'\t<programme start=\"' + startTime + ' ' + TZoffset + '\" stop=\"' + stopTime + ' ' + TZoffset + '\" channel=\"' + station + '.zap2epg' + '\">\n')
+                                encwrite(fh, enc,'\t<programme start=\"' + startTime + '\" stop=\"' + stopTime + '\" channel=\"' + station + '.zap2epg' + '\">\n')
                                 dd_progid = edict['epid']
                                 if edict['epshow'] is not None:
                                     encwrite(fh, enc,'\t\t<title lang=\"' + lang + '\">' + re.sub('&','&amp;',edict['epshow']) + '</title>\n')
@@ -271,7 +271,7 @@ def mainRun( days, offset, config_file, output ):
                                 if not any(i in ['New', 'Live'] for i in edict['epflag']):
                                     if edict['epoad'] is not None and int(edict['epoad']) > 0:
                                         encwrite(fh, enc,"\t\t<previously-shown ")
-                                        encwrite(fh, enc,"start=\"" + convTime(edict['epoad']) + " " + TZoffset + "\"")
+                                        encwrite(fh, enc,"start=\"" + convTime(edict['epoad']) + "\"")
                                         encwrite(fh, enc," />\n")
                                 # <premiere />
                                 # <last-chance />
