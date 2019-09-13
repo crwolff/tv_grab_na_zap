@@ -631,7 +631,7 @@ def configure(filename):
     elif ( country == 'CAN' ):
 	zipcode = re.sub(' ', '', zipcode.upper())
 
-    # Download lineu
+    # Download lineup
     url = 'https://tvlistings.zap2it.com/gapzap_webapi/api/Providers/getPostalCodeProviders/' + country + '/' + zipcode + '/gapzap/en'
     if ( country == 'USA' ):
 	lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
@@ -695,6 +695,16 @@ def configure(filename):
 	    stationDict[skey]['include'] = 'False'
     stationDictSort = OrderedDict(sorted(stationDict.iteritems(), key=lambda i: (float(i[1]['num']))))
 
+    oldStations = []
+    with open(filename,'r') as fp:
+        for line in fp:
+            parts = re.sub( ' *[#;].*\n','', line ).strip().split('=',1)
+            parts = map( str.strip, parts )
+            if (( parts[0] == '' ) or ( len(parts) != 2 )):
+                pass
+            elif ( parts[0] == 'channel' ):
+                oldStations.append( re.sub( '.zap2epg', '', parts[1] ))
+
     # Select channels
     print 'Select stations: '
     ans = ''
@@ -704,11 +714,18 @@ def configure(filename):
 	elif ( ans == 'none' ):
 	    stationDictSort[station]['include'] = 'False'
 	else:
-	    sys.stdout.write( stationDictSort[station]['name'] + ' (' + stationDictSort[station]['num'] + ')  [yes,no,all,none (default=no)]: ' )
+	    if ( station in oldStations ):
+		ans = 'yes'
+		stationDictSort[station]['include'] = 'True'
+	    else:
+		ans = 'no'
+		stationDictSort[station]['include'] = 'False'
+	    sys.stdout.write( stationDictSort[station]['name'] + ' (' + stationDictSort[station]['num'] + ',' + str(station) + ')  [yes,no,all,none (default=' + ans + ')]: ' )
 	    sys.stdout.flush()
-	    ans = sys.stdin.readline().strip()
-	    ans = ans.lower()
-	    if (( ans == 'yes' ) or ( ans[0] == 'y' ) or ( ans == 'all' )):
+	    ans = sys.stdin.readline().strip().lower()
+	    if ( ans == '' ):
+		pass
+	    elif (( ans == 'yes' ) or ( ans[0] == 'y' ) or ( ans == 'all' )):
 		stationDictSort[station]['include'] = 'True'
 	    else:
 		stationDictSort[station]['include'] = 'False'
