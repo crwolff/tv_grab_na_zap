@@ -696,14 +696,17 @@ def configure(filename):
     stationDictSort = OrderedDict(sorted(stationDict.iteritems(), key=lambda i: (float(i[1]['num']))))
 
     oldStations = []
-    with open(filename,'r') as fp:
-        for line in fp:
-            parts = re.sub( ' *[#;].*\n','', line ).strip().split('=',1)
-            parts = map( str.strip, parts )
-            if (( parts[0] == '' ) or ( len(parts) != 2 )):
-                pass
-            elif ( parts[0] == 'channel' ):
-                oldStations.append( re.sub( '.zap2epg', '', parts[1] ))
+    try:
+	with open(filename,'r') as fp:
+            for line in fp:
+		parts = re.sub( ' *[#;].*\n','', line ).strip().split('=',1)
+		parts = map( str.strip, parts )
+		if (( parts[0] == '' ) or ( len(parts) != 2 )):
+		    pass
+		elif ( parts[0] == 'channel' ):
+		    oldStations.append( re.sub( '.zap2epg', '', parts[1] ))
+    except Exception:
+	pass
 
     # Select channels
     print 'Select stations: '
