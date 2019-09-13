@@ -632,7 +632,7 @@ def configure(filename):
 	zipcode = re.sub(' ', '', zipcode.upper())
 
     # Download lineu
-    url = 'https://tvlistings.zap2it.com/gapzap_webapi/api/Providers/getPostalCodeProviders/' + country + '/' + zipcode + '/gapzap'
+    url = 'https://tvlistings.zap2it.com/gapzap_webapi/api/Providers/getPostalCodeProviders/' + country + '/' + zipcode + '/gapzap/en'
     if ( country == 'USA' ):
 	lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
 	lineupsC = ['NONE', 'DFLTE', 'DFLTC', 'DFLTM', 'DFLTP', 'DFLTA', 'DFLTH']
