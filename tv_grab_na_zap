@@ -570,7 +570,7 @@ def mainRun( days, offset, config_file, output ):
                     if attempts == 0:
                         logging.info('Downloading guide data for: %s', str(gridtime))
                     else:
-                        time.sleep(1)
+                        time.sleep(4<<attempts)
                         logging.info('Retrying guide data for: %s', str(gridtime))
                     saveContent = None
                     try:
