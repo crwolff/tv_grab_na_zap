@@ -214,7 +214,7 @@ def mainRun( days, offset, config_file, output ):
         episodeCount = 0
         try:
             logging.info('Writing Episodes to xmltv.xml file...')
-            for station in scheduleSort:
+            for station in schedule:
                 lang = 'en'
                 sdict = schedule[station]
                 for episode in sdict:
