@@ -566,12 +566,8 @@ def mainRun( days, offset, config_file, output ):
             filename = str(gridtime) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
             if ((offset == 0) and (count < 16)) or ((offset == 1) and (count < 8)) or (not os.path.exists(fileDir)):
+                logging.info('Downloading guide data for: %s', str(gridtime))
                 for attempts in range(5):
-                    if attempts == 0:
-                        logging.info('Downloading guide data for: %s', str(gridtime))
-                    else:
-                        time.sleep(4<<attempts)
-                        logging.info('Retrying guide data for: %s', str(gridtime))
                     saveContent = None
                     try:
                         url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country
@@ -585,8 +581,9 @@ def mainRun( days, offset, config_file, output ):
                         else:
                             saveContent = resp.read()
                         break
-                    except:
-                        pass
+                    except urllib2.URLError, e:
+                        time.sleep(4<<attempts)
+                        logging.warn('Retry downloading guide data for: %s  -  %s', str(gridtime), e)
                 if saveContent is None:
                     logging.warn('Could not download guide data for: %s', str(gridtime))
                     logging.warn('URL: %s', url)
