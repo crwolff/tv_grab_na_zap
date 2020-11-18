@@ -461,7 +461,7 @@ def mainRun( days, offset, config_file, output ):
                                     url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
                                     data = 'programSeriesID=' + EPseries
                                     try:
-                                        JSONcontent = fetcher(url, data=data)
+                                        JSONcontent = fetcher(url, post=data)
                                         if JSONcontent:
                                             with open(fileDir,"wb+") as f:
                                                 f.write(JSONcontent)
