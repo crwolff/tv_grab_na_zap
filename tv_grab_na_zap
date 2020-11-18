@@ -44,6 +44,20 @@ def mkdir_p(path):
         else:
             raise
 
+ # Utility to fetch a (possibly gzipped) web page
+def fetcher(url, post=None):
+    try:
+        req = urllib.request.Request(url, data=post)
+        req.add_header( 'Accept-Encoding', 'gzip' )
+        resp = urllib.request.urlopen(req)
+        if resp.info().get('Content-Encoding') == 'gzip':
+            content = gzip.decompress(resp.read())
+        else:
+            content = resp.read()
+    except urllib.error.URLError:
+        raise
+    return content
+
 # Main scraper
 def mainRun( days, offset, config_file, output ):
 
@@ -445,8 +459,7 @@ def mainRun( days, offset, config_file, output ):
                                     url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
                                     data = 'programSeriesID=' + EPseries
                                     try:
-                                        URLcontent = urllib.request.Request(url, data=data.encode('utf-8'))
-                                        JSONcontent = urllib.request.urlopen(URLcontent).read()
+                                        JSONcontent = fetcher(url, post=data.encode('utf-8'))
                                         if JSONcontent:
                                             with open(fileDir,"wb+") as f:
                                                 f.write(JSONcontent)
@@ -568,7 +581,7 @@ def mainRun( days, offset, config_file, output ):
                 try:
                     logging.info('Downloading guide data for: %s', str(gridtime))
                     url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
-                    saveContent = urllib.request.urlopen(url).read()
+                    saveContent = fetcher(url)
                     savepage(fileDir, saveContent)
                 except:
                     logging.warn('Could not download guide data for: %s', str(gridtime))
@@ -641,7 +654,7 @@ def configure(filename):
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
         lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
         deviceX = ['-', '-', '-', '-', '-']
-    content = urllib.request.urlopen(url).read()
+    content = fetcher(url)
     lineupDict = json.loads(content.decode('utf-8'))
     #print lineupDict
 
@@ -683,7 +696,7 @@ def configure(filename):
     # Create channel list
     gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
     url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
-    content = urllib.request.urlopen(url).read()
+    content = fetcher(url)
     contentDict = json.loads(content.decode('utf-8'))
     stationDict = {}
     if 'channels' in contentDict:
