@@ -45,6 +45,21 @@ def mkdir_p(path):
 	else:
 	    raise
 
+# Utility to fetch a (possibly gzipped) web page
+def fetcher(url, post=None):
+    try:
+        req = urllib2.Request(url, data=post)
+        req.add_header( 'Accept-Encoding', 'gzip' )
+        resp = urllib2.urlopen(req)
+        if resp.info().get('Content-Encoding') == 'gzip':
+            buf = StringIO(resp.read())
+            content = gzip.GzipFile(fileobj=buf).read()
+        else:
+            content = resp.read()
+    except urllib2.URLError:
+        raise
+    return content
+
 # Main scraper
 def mainRun( days, offset, config_file, output ):
 
@@ -446,8 +461,7 @@ def mainRun( days, offset, config_file, output ):
                                     url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
                                     data = 'programSeriesID=' + EPseries
                                     try:
-                                        URLcontent = urllib2.Request(url, data=data)
-                                        JSONcontent = urllib2.urlopen(URLcontent).read()
+                                        JSONcontent = fetcher(url, data=data)
                                         if JSONcontent:
                                             with open(fileDir,"wb+") as f:
                                                 f.write(JSONcontent)
@@ -572,14 +586,7 @@ def mainRun( days, offset, config_file, output ):
                     try:
                         url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country
                         url = url + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
-                        req = urllib2.Request(url)
-                        req.add_header( 'Accept-Encoding', 'gzip' )
-                        resp = urllib2.urlopen(req)
-                        if resp.info().get('Content-Encoding') == 'gzip':
-                            buf = StringIO(resp.read())
-                            saveContent = gzip.GzipFile(fileobj=buf).read()
-                        else:
-                            saveContent = resp.read()
+                        saveContent = fetcher(url)
                         break
                     except urllib2.URLError, e:
                         time.sleep(4<<attempts)
@@ -656,9 +663,8 @@ def configure(filename):
 	lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific']
 	lineupsC = ['NONE', 'DFLTEC', 'DFLTCC', 'DFLTMC', 'DFLTPC']
 	deviceX = ['-', '-', '-', '-', '-']
-    content = urllib2.urlopen(url).read()
+    content = fetcher(url)
     lineupDict = json.loads(content)
-    #print lineupDict
 
     # Parse providers
     if 'Providers' in lineupDict:
@@ -698,7 +704,7 @@ def configure(filename):
     # Create channel list
     gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
     url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
-    content = urllib2.urlopen(url).read()
+    content = fetcher(url)
     contentDict = json.loads(content)
     stationDict = {}
     if 'channels' in contentDict:
