@@ -578,16 +578,23 @@ def mainRun( days, offset, config_file, output ):
             filename = str(gridtime) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
             if ((offset == 0) and (count < 16)) or ((offset == 1) and (count < 8)) or (not os.path.exists(fileDir)):
-                try:
-                    logging.info('Downloading guide data for: %s', str(gridtime))
-                    url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
-                    saveContent = fetcher(url)
-                    savepage(fileDir, saveContent)
-                except:
+                logging.info('Downloading guide data for: %s', str(gridtime))
+                for attempts in range(5):
+                    saveContent = None
+                    try:
+                        url = 'http://tvschedule.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country
+                        url = url + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+                        saveContent = fetcher(url)
+                        break
+                    except urllib.error.URLError as e:
+                        time.sleep(4<<attempts)
+                        logging.warn('Retry downloading guide data for: %s  -  %s', str(gridtime), e)
+                if saveContent is None:
                     logging.warn('Could not download guide data for: %s', str(gridtime))
                     logging.warn('URL: %s', url)
                     sys.stderr.write("No data available\n")
                     exit(1)
+                savepage(fileDir, saveContent)
             if os.path.exists(fileDir):
                 try:
                     with gzip.open(fileDir, 'rb') as f:
