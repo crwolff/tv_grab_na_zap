@@ -256,7 +256,7 @@ def mainRun( days, offset, config_file, output ):
                                         genreNewList = genreSort(edict['epfilter'], edict['epgenres'])
                                         for genre in genreNewList:
                                             if ( genre is not None ) and ( genre != '' ):
-                                                encwrite(fh, enc,"\t\t<category lang=\"" + lang + "\">" + genre + "</category>\n")
+                                                encwrite(fh, enc,"\t\t<category lang=\"" + lang + "\">" + re.sub('&','&amp;', genre) + "</category>\n")
                                 # <keyword />
                                 # <language />
                                 # <orig-language />
