@@ -312,7 +312,7 @@ def mainRun( days, offset, config_file, output ):
         try:
             enc = 'utf-8'
             if outFile is None:
-                fh = sys.stdout
+                fh = sys.stdout.buffer
             else:
                 fh = open(outFile, 'w+b')
             printHeader(fh, enc)
