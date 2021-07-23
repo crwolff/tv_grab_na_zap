@@ -213,8 +213,8 @@ def mainRun( days, offset, config_file, output ):
                     encwrite(fh, enc,'\t\t<display-name>' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
                     encwrite(fh, enc,'\t\t<display-name>' + xchnum + '</display-name>\n')
                 elif 'chfcc' in scheduleSort[station]:
-                    xchnum = scheduleSort[station]['chfcc']
-                    encwrite(fh, enc,'\t\t<display-name>' + re.sub('&','&amp;',xcfcc) + '</display-name>\n')
+                    xchfcc = scheduleSort[station]['chfcc']
+                    encwrite(fh, enc,'\t\t<display-name>' + re.sub('&','&amp;',xchfcc) + '</display-name>\n')
                 elif 'chnum' in scheduleSort[station]:
                     xchnum = scheduleSort[station]['chnum']
                     encwrite(fh, enc,'\t\t<display-name>' + xchnum + '</display-name>\n')
