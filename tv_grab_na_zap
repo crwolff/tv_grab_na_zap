@@ -50,7 +50,7 @@ def fetcher(url, post=None):
     try:
         req = urllib.request.Request(url, data=post)
         req.add_header( 'Accept-Encoding', 'gzip' )
-        resp = urllib.request.urlopen(req)
+        resp = urllib.request.urlopen(req, timeout=30)
         if resp.info().get('Content-Encoding') == 'gzip':
             content = gzip.decompress(resp.read())
         else:
