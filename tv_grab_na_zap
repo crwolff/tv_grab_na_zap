@@ -507,25 +507,22 @@ def mainRun( days, offset, config_file, output ):
                         fileDir = os.path.join(cacheDir, filename)
                         try:
                             if not os.path.exists(fileDir) and EPseries not in failList:
-                                retry = 3
-                                while retry > 0:
-                                    logging.info('Downloading details data for: %s', EPseries)
-                                    url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
-                                    data = 'programSeriesID=' + EPseries
+                                logging.info('Downloading details data for: %s', EPseries)
+                                url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
+                                data = 'programSeriesID=' + EPseries
+                                for retry in range(4):
                                     try:
                                         JSONcontent = fetcher(url, post=data.encode('utf-8'))
                                         if JSONcontent:
                                             with open(fileDir,"wb+") as f:
                                                 f.write(JSONcontent)
                                                 f.close()
-                                            retry = 0
+                                            break
                                         else:
-                                            time.sleep(1)
-                                            retry -= 1
+                                            time.sleep(1<<(2*retry))
                                             logging.warning('Retry downloading missing details data for: %s', EPseries)
                                     except urllib.error.URLError as e:
-                                        time.sleep(1)
-                                        retry -= 1
+                                        time.sleep(1<<(2*retry))
                                         logging.warning('Retry downloading details data for: %s  -  %s', EPseries, e)
                             if os.path.exists(fileDir):
                                 fileSize = os.path.getsize(fileDir)
