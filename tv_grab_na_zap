@@ -628,7 +628,7 @@ def mainRun( days, offset, config_file, output ):
         while count < dayHours:
             filename = str(gridtime) + '.json.gz'
             fileDir = os.path.join(cacheDir, filename)
-            if ((offset == 0) and (count < 16)) or ((offset == 1) and (count < 8)) or (not os.path.exists(fileDir)):
+            if (offset <= 4) or (not os.path.exists(fileDir)):
                 logging.info('Downloading guide data for: %s', str(gridtime))
                 for attempts in range(5):
                     saveContent = None
