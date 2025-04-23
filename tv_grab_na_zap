@@ -368,8 +368,8 @@ def mainRun( days, offset, config_file, output ):
 
             logging.info('Building XML tree...')
             root = ET.Element("tv")
-            root.set("source-info-url","http://tvschedule.zap2it.com/")
-            root.set("source-info-name","zap2it.com")
+            root.set("source-info-url","https://tvlistings.gracenote.com/")
+            root.set("source-info-name","gracenote.com")
             printStations(root)
             printEpisodes(root)
             fh.write(ET.tostring(root, encoding=enc, xml_declaration=True, doctype='<!DOCTYPE tv SYSTEM "xmltv.dtd">', pretty_print=True))
@@ -494,7 +494,7 @@ def mainRun( days, offset, config_file, output ):
 
     def parseXdetails():
         showList = []
-        failList = []
+        failList = ["SH00000001"]
         try:
             for station in schedule:
                 sdict = schedule[station]
@@ -508,7 +508,7 @@ def mainRun( days, offset, config_file, output ):
                         try:
                             if not os.path.exists(fileDir) and EPseries not in failList:
                                 logging.info('Downloading details data for: %s', EPseries)
-                                url = 'https://tvlistings.zap2it.com/api/program/overviewDetails'
+                                url = 'https://tvlistings.gracenote.com/api/program/overviewDetails'
                                 data = 'programSeriesID=' + EPseries
                                 for retry in range(4):
                                     try:
@@ -633,7 +633,7 @@ def mainRun( days, offset, config_file, output ):
                 for attempts in range(5):
                     saveContent = None
                     try:
-                        url = 'http://tvschedule.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country
+                        url = 'https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country
                         url = url + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
                         saveContent = fetcher(url)
                         break
@@ -703,7 +703,7 @@ def configure(filename):
         zipcode = re.sub(' ', '', zipcode.upper())
 
     # Download lineup
-    url = 'https://tvlistings.zap2it.com/gapzap_webapi/api/Providers/getPostalCodeProviders/' + country + '/' + zipcode + '/gapzap/en'
+    url = 'https://tvlistings.gracenote.com/gapzap_webapi/api/Providers/getPostalCodeProviders/' + country + '/' + zipcode + '/gapzap/en'
     if ( country == 'USA' ):
         lineupsN = ['AVAILABLE LINEUPS', 'TIMEZONE - Eastern', 'TIMEZONE - Central', 'TIMEZONE - Mountain', 'TIMEZONE - Pacific', 'TIMEZONE - Alaskan', 'TIMEZONE - Hawaiian']
         lineupsC = ['NONE', 'DFLTE', 'DFLTC', 'DFLTM', 'DFLTP', 'DFLTA', 'DFLTH']
@@ -753,7 +753,7 @@ def configure(filename):
 
     # Create channel list
     gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
-    url = 'http://tvlistings.zap2it.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+    url = 'https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
     content = fetcher(url)
     contentDict = json.loads(content.decode('utf-8'))
     stationDict = {}
@@ -868,7 +868,7 @@ def tv_grab_na_zap():
         print("manualconfig")
         exit(0)
     if ( args.description ):
-        print("NA Zap2it (www.zap2it.com)")
+        print("NA Zap2it (www.gracenote.com)")
         exit(0)
 
     # Global
