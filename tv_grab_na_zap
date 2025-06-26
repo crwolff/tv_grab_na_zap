@@ -35,6 +35,8 @@ import urllib.request, urllib.error, urllib.parse
 from collections import OrderedDict
 import lxml.etree as ET
 
+useragent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0"
+
 # Utility to create directory
 def mkdir_p(path):
     try:
@@ -48,7 +50,7 @@ def mkdir_p(path):
  # Utility to fetch a (possibly gzipped) web page
 def fetcher(url, post=None):
     try:
-        req = urllib.request.Request(url, data=post)
+        req = urllib.request.Request(url, data=post, headers={'User-Agent': useragent})
         req.add_header( 'Accept-Encoding', 'gzip' )
         resp = urllib.request.urlopen(req, timeout=30)
         if resp.info().get('Content-Encoding') == 'gzip':
