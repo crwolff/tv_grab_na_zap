@@ -910,7 +910,10 @@ if __name__ == '__main__':
     # Enable logging
     log = os.path.join(userdata, 'zap2epg.log')
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    if verbose:
+        logger.setLevel(logging.INFO)
+    else:
+        logger.setLevel(logging.WARNING)
     handler = logging.handlers.RotatingFileHandler( log, maxBytes=5*1024*1024, backupCount=5)
     fmt = logging.Formatter( '%(asctime)s %(message)s', datefmt='%Y/%m/%d %H:%M:%S' )
     handler.setFormatter( fmt )
