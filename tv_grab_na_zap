@@ -592,7 +592,7 @@ def mainRun( days, offset, config_file, output ):
                 stationList.append( re.sub( '.zap2epg', '', parts[1] ))
             else:
                 settingsDict[parts[0]] = parts[1]
-        #print settingsDict
+        #print(settingsDict)
     for setting in settingsDict:
         if setting == 'country':
             country = settingsDict[setting]
@@ -635,8 +635,9 @@ def mainRun( days, offset, config_file, output ):
                 for attempts in range(5):
                     saveContent = None
                     try:
-                        url = 'https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country
-                        url = url + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+                        url = 'https://tvlistings.gracenote.com/api/grid?aid=orbebb&TMSID=&AffiliateID=lat&FromPage=TV%20Grid&'
+                        url = url + 'lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device
+                        url = url + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&isOverride=true&pref=-&userId=-'
                         saveContent = fetcher(url)
                         break
                     except urllib.error.URLError as e:
@@ -716,7 +717,7 @@ def configure(filename):
         deviceX = ['-', '-', '-', '-', '-']
     content = fetcher(url)
     lineupDict = json.loads(content.decode('utf-8'))
-    #print lineupDict
+    #print(lineupDict)
 
     # Parse providers
     if 'Providers' in lineupDict:
@@ -755,7 +756,9 @@ def configure(filename):
 
     # Create channel list
     gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
-    url = 'https://tvlistings.gracenote.com/api/grid?lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&pref=-&userId=-'
+    url = 'https://tvlistings.gracenote.com/api/grid?aid=orbebb&TMSID=&AffiliateID=lat&FromPage=TV%20Grid&'
+    url = url + 'lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device
+    url = url + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&isOverride=true&pref=-&userId=-'
     content = fetcher(url)
     contentDict = json.loads(content.decode('utf-8'))
     stationDict = {}
