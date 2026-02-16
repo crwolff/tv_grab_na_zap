@@ -14,6 +14,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
+Affiliates =  ( 'orbebb', 'digiceltrin', 'antennatv', 'newsnation', 'katu', 'tribnyc2dl', 'tribtor2dl', 'cha', 'chi' )
+AffiliateID = Affiliates[0]
+
 import appdirs
 import argparse
 import base64
@@ -285,19 +288,19 @@ def mainRun( days, offset, config_file, output ):
                                     if epicon == '1':
                                         if edict['epimage'] is not None and edict['epimage'] != '':
                                             tag = ET.SubElement(prog, "icon")
-                                            tag.set("src", "https://zap2it.tmsimg.com/assets/" + edict['epimage'] + ".jpg")
+                                            tag.set("src", "https://dshm.tmsimg.com/assets/" + edict['epimage'] + ".jpg")
                                         else:
                                             if edict['epthumb'] is not None and edict['epthumb'] != '':
                                                 tag = ET.SubElement(prog, "icon")
-                                                tag.set("src", "https://zap2it.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
+                                                tag.set("src", "https://dshm.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
                                     if epicon == '2':
                                         if edict['epthumb'] is not None and edict['epthumb'] != '':
                                             tag = ET.SubElement(prog, "icon")
-                                            tag.set("src", "https://zap2it.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
+                                            tag.set("src", "https://dshm.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
                                 if episode.startswith("MV"):
                                     if edict['epthumb'] is not None and edict['epthumb'] != '':
                                         tag = ET.SubElement(prog, "icon")
-                                        tag.set("src", "https://zap2it.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
+                                        tag.set("src", "https://dshm.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
 
                                 # <url />
 
@@ -635,7 +638,7 @@ def mainRun( days, offset, config_file, output ):
                 for attempts in range(5):
                     saveContent = None
                     try:
-                        url = 'https://tvlistings.gracenote.com/api/grid?aid=orbebb&TMSID=&AffiliateID=lat&FromPage=TV%20Grid&'
+                        url = 'https://tvlistings.gracenote.com/api/grid?aid=' + AffiliateID + '&TMSID=&AffiliateID=lat&FromPage=TV%20Grid&'
                         url = url + 'lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device
                         url = url + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&isOverride=true&pref=-&userId=-'
                         saveContent = fetcher(url)
@@ -756,7 +759,7 @@ def configure(filename):
 
     # Create channel list
     gridtime = (int(time.mktime(time.strptime(str(datetime.datetime.now().replace(microsecond=0,second=0,minute=0)), '%Y-%m-%d %H:%M:%S'))))
-    url = 'https://tvlistings.gracenote.com/api/grid?aid=orbebb&TMSID=&AffiliateID=lat&FromPage=TV%20Grid&'
+    url = 'https://tvlistings.gracenote.com/api/grid?aid=' + AffiliateID + '&TMSID=&AffiliateID=lat&FromPage=TV%20Grid&'
     url = url + 'lineupId=&timespan=3&headendId=' + lineupcode + '&country=' + country + '&device=' + device
     url = url + '&postalCode=' + zipcode + '&time=' + str(gridtime) + '&isOverride=true&pref=-&userId=-'
     content = fetcher(url)
