@@ -288,19 +288,19 @@ def mainRun( days, offset, config_file, output ):
                                     if epicon == '1':
                                         if edict['epimage'] is not None and edict['epimage'] != '':
                                             tag = ET.SubElement(prog, "icon")
-                                            tag.set("src", "https://dshm.tmsimg.com/assets/" + edict['epimage'] + ".jpg")
+                                            tag.set("src", "https://tmsimg.fancybits.co/assets/" + edict['epimage'] + ".jpg")
                                         else:
                                             if edict['epthumb'] is not None and edict['epthumb'] != '':
                                                 tag = ET.SubElement(prog, "icon")
-                                                tag.set("src", "https://dshm.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
+                                                tag.set("src", "https://tmsimg.fancybits.co/assets/" + edict['epthumb'] + ".jpg")
                                     if epicon == '2':
                                         if edict['epthumb'] is not None and edict['epthumb'] != '':
                                             tag = ET.SubElement(prog, "icon")
-                                            tag.set("src", "https://dshm.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
+                                            tag.set("src", "https://tmsimg.fancybits.co/assets/" + edict['epthumb'] + ".jpg")
                                 if episode.startswith("MV"):
                                     if edict['epthumb'] is not None and edict['epthumb'] != '':
                                         tag = ET.SubElement(prog, "icon")
-                                        tag.set("src", "https://dshm.tmsimg.com/assets/" + edict['epthumb'] + ".jpg")
+                                        tag.set("src", "https://tmsimg.fancybits.co/assets/" + edict['epthumb'] + ".jpg")
 
                                 # <url />
 
